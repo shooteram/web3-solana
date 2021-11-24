@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { has, lose, retrieve, save } from "./ls";
 import './style.css';
 
 const App = () => {
@@ -16,6 +17,17 @@ const App = () => {
 
         const { solana } = window as unknown as Phantom;
         setWallet(solana);
+
+        if (has('publicKey')) {
+            setPublicKey(retrieve('publicKey'));
+            setConnected(true);
+
+            // check if the public key is still valid
+            solana.connect({ onlyIfTrusted: true }).catch(() => {
+                setConnected(false);
+                lose('publicKey');
+            });
+        }
     };
 
     const connect = () => {
@@ -26,8 +38,10 @@ const App = () => {
 
         wallet.connect()
             .then(response => {
+                const pub = response.publicKey._bn.words.join('');
+                setPublicKey(pub);
+                save('publicKey', pub);
                 setConnected(true);
-                setPublicKey(response.publicKey._bn.words.join(''));
             });
     }
 
