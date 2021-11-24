@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { has, lose, retrieve, save } from "./ls";
 import './style.css';
 
 const App = () => {
     const [wallet, setWallet] = useState<Solana | undefined>(undefined);
     const [error, setError] = useState('');
     const [connected, setConnected] = useState(false);
-    const [publicKey, setPublicKey] = useState('');
 
     // https://docs.phantom.app/integrating/detecting-the-provider
     const checkWallet = () => {
@@ -18,16 +16,10 @@ const App = () => {
         const { solana } = window as unknown as Phantom;
         setWallet(solana);
 
-        if (has('publicKey')) {
-            setPublicKey(retrieve('publicKey'));
-            setConnected(true);
-
-            // check if the public key is still valid
-            solana.connect({ onlyIfTrusted: true }).catch(() => {
-                setConnected(false);
-                lose('publicKey');
-            });
-        }
+        // check if the public key is still valid
+        solana.connect({ onlyIfTrusted: true })
+            .then(() => { setConnected(true) })
+            .catch(() => { setConnected(false) });
     };
 
     const connect = () => {
@@ -36,13 +28,7 @@ const App = () => {
             return;
         }
 
-        wallet.connect()
-            .then(response => {
-                const pub = response.publicKey._bn.words.join('');
-                setPublicKey(pub);
-                save('publicKey', pub);
-                setConnected(true);
-            });
+        wallet.connect().then(() => { setConnected(true) });
     }
 
     useEffect(() => {
@@ -65,8 +51,7 @@ const App = () => {
 
     return <>
         {connected
-            ? <><div>connected!</div>
-                <code>publicKey: {publicKey}</code></>
+            ? <div>connected!</div>
             : <button onClick={connect}>connect</button>}
 
         {error && <div style={{ color: 'red' }}>error: {error}</div>}
